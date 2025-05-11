@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: artman-back-end
+  datasource:
+    url:
+      jdbc:mysql://localhost:3306/artman?
+      useUnicode=true&
+      characterEncoding=utf-8&
+      serverTimezone=Asia/Shanghai&
+      autoReconnect=true&
+      rewriteBatchedStatements=true&
+      useSSL=false
+    username: root
+    password: alpine
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.CompositeEnumTypeHandler
+  mapper-locations: classpath*:/mybatis/mapper/**/*.xml
+  type-aliases-package: cn.edu.hit.artman.pojo.po.*
