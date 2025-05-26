@@ -2,7 +2,6 @@ package cn.edu.hit.artman.pojo.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,7 +10,6 @@ import java.time.LocalDateTime;
 
 @Schema(title = "二级评论信息VO")
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class SubCommentInfoVO implements Serializable {

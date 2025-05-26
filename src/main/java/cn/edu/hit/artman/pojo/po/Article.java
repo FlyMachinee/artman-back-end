@@ -11,7 +11,6 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -20,7 +19,6 @@ import lombok.NoArgsConstructor;
  */
 @TableName(value ="article")
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Article implements Serializable {

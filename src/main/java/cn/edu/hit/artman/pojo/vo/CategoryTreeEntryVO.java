@@ -2,7 +2,6 @@ package cn.edu.hit.artman.pojo.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,7 +11,6 @@ import java.util.List;
 
 @Schema(description = "分类信息树VO")
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CategoryTreeEntryVO implements Serializable {

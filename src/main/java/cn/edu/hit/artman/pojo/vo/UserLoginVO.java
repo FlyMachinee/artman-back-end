@@ -2,7 +2,6 @@ package cn.edu.hit.artman.pojo.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,7 +9,6 @@ import java.io.Serializable;
 
 @Schema(title = "用户登录返回信息VO")
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserLoginVO implements Serializable {

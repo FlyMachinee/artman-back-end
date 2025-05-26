@@ -3,7 +3,6 @@ package cn.edu.hit.artman.pojo.vo;
 import cn.edu.hit.artman.common.enumeration.ArticleStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,7 +11,6 @@ import java.time.LocalDateTime;
 
 @Schema(title = "文章信息VO")
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ArticleInfoVO implements Serializable {
