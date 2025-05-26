@@ -1,0 +1,40 @@
+package cn.edu.hit.artman.pojo.dto;
+
+import cn.edu.hit.artman.common.enumeration.ArticleStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+
+@Schema(title = "文章创建DTO")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ArticleCreateDTO implements Serializable {
+
+    @Schema(title = "文章标题", example = "如何使用Spring Boot")
+    @NotNull(message = "文章标题不能为空")
+    private String title;
+
+    @Schema(title = "文章摘要", example = "本文将介绍如何使用Spring Boot进行开发")
+    @NotNull(message = "文章摘要不能为空")
+    private String summary;
+
+    @Schema(title = "文章内容", example = "Spring Boot是一个开源的Java框架...")
+    @NotNull(message = "文章内容不能为空")
+    private String content;
+
+    @Schema(title = "文章所属分类id", example = "5")
+    private Long categoryId;
+
+    @Schema(title = "文章是否为共享", example = "true")
+    @NotNull(message = "文章共享状态不能为空")
+    private Boolean isShared;
+
+    @Schema(title = "文章状态", example = "draft")
+    @NotNull(message = "文章状态不能为空")
+    private ArticleStatus status;
+}

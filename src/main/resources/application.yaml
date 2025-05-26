@@ -1,3 +1,8 @@
+server:
+  port: 8888
+  servlet:
+    context-path: /api/v1
+
 spring:
   application:
     name: artman-back-end
@@ -20,3 +25,9 @@ mybatis-plus:
     default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.CompositeEnumTypeHandler
   mapper-locations: classpath*:/mybatis/mapper/**/*.xml
   type-aliases-package: cn.edu.hit.artman.pojo.po.*
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
