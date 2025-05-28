@@ -2,6 +2,7 @@ package cn.edu.hit.artman.pojo.dto;
 
 import cn.edu.hit.artman.common.enumeration.ArticleStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,11 +17,10 @@ import java.io.Serializable;
 public class ArticleCreateDTO implements Serializable {
 
     @Schema(title = "文章标题", example = "如何使用Spring Boot")
-    @NotNull(message = "文章标题不能为空")
+    @NotBlank(message = "文章标题不能为空")
     private String title;
 
     @Schema(title = "文章摘要", example = "本文将介绍如何使用Spring Boot进行开发")
-    @NotNull(message = "文章摘要不能为空")
     private String summary;
 
     @Schema(title = "文章内容", example = "Spring Boot是一个开源的Java框架...")

@@ -59,7 +59,7 @@ public class Article implements Serializable {
      * 文章是否共享
      */
     @TableField(value = "is_shared")
-    private Boolean shared;
+    private Boolean isShared;
 
     /**
      * 文章状态：草稿、发布

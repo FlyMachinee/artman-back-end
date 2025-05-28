@@ -11,14 +11,104 @@
             <result property="title" column="title" />
             <result property="summary" column="summary" />
             <result property="contentUrl" column="content_url" />
-            <result property="shared" column="is_shared" />
+            <result property="isShared" column="is_shared" />
             <result property="status" column="status" />
             <result property="createTime" column="create_time" />
             <result property="updateTime" column="update_time" />
     </resultMap>
 
+    <resultMap id="ArticleInfoMap" type="cn.edu.hit.artman.pojo.vo.ArticleInfoVO">
+        <id property="articleId" column="article_id" />
+        <result property="userId" column="user_id" />
+        <result property="username" column="username" />
+        <result property="nickname" column="nickname" />
+        <result property="categoryId" column="category_id" />
+        <result property="title" column="title" />
+        <result property="summary" column="summary" />
+        <result property="contentUrl" column="content_url" />
+        <result property="isShared" column="is_shared" />
+        <result property="status" column="status" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
     <sql id="Base_Column_List">
-        article_id,user_id,category_id,title,abstract,content_url,
+        article_id,user_id,category_id,title,summary,content_url,
         is_shared,status,create_time,update_time
     </sql>
+
+    <sql id="Article_Info_Column_List">
+        article_id,user.user_id,username,nickname,
+        category_id,title,summary,content_url,
+        is_shared,status,article.create_time,article.update_time
+    </sql>
+
+    <update id="setCategoryIdNull">
+        update article
+        set category_id = null
+        where article_id = #{articleId}
+    </update>
+
+    <select id="getAllArticlesInfoByUserId" resultType="cn.edu.hit.artman.pojo.vo.ArticleInfoVO"
+        resultMap="ArticleInfoMap"
+    >
+        select
+        <include refid="Article_Info_Column_List"/>
+        from article
+        left join user on article.user_id = user.user_id
+        where user.user_id = #{userId}
+    </select>
+
+    <select id="getSimpleSearchArticlesInfoByUserId" resultType="cn.edu.hit.artman.pojo.vo.ArticleInfoVO"
+        resultMap="ArticleInfoMap"
+    >
+        select
+        <include refid="Article_Info_Column_List"/>
+        from article
+        left join user on article.user_id = user.user_id
+        <where>
+            user.user_id = #{userId}
+            <if test="isShared != null">
+                and is_shared = #{isShared}
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+            <if test="startDate != null">
+                and create_time &gt;= #{startDate}
+            </if>
+            <if test="endDate != null">
+                and create_time &lt;= #{endDate}
+            </if>
+        </where>
+    </select>
+
+    <select id="getArticleInfoById" resultType="cn.edu.hit.artman.pojo.vo.ArticleInfoVO"
+        resultMap="ArticleInfoMap"
+    >
+        select
+        <include refid="Article_Info_Column_List"/>
+        from article
+        left join user on article.user_id = user.user_id
+        where article.article_id = #{articleId}
+    </select>
+
+    <select id="getSimpleSearchSharedArticles" resultType="cn.edu.hit.artman.pojo.vo.ArticleInfoVO"
+        resultMap="ArticleInfoMap"
+    >
+        select
+        <include refid="Article_Info_Column_List"/>
+        from article
+        left join user on article.user_id = user.user_id
+        <where>
+            is_shared = 1
+            and status = 'published'
+            <if test="startDate != null">
+                and create_time &gt;= #{startDate}
+            </if>
+            <if test="endDate != null">
+                and create_time &lt;= #{endDate}
+            </if>
+        </where>
+    </select>
 </mapper>

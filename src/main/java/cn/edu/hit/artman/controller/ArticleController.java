@@ -1,19 +1,24 @@
 package cn.edu.hit.artman.controller;
 
+import cn.edu.hit.artman.common.exception.ArtManException;
 import cn.edu.hit.artman.common.result.Result;
-import cn.edu.hit.artman.pojo.dto.ArticleComplexSearchDTO;
-import cn.edu.hit.artman.pojo.dto.ArticleCreateDTO;
-import cn.edu.hit.artman.pojo.dto.ArticleSimpleSearchDTO;
-import cn.edu.hit.artman.pojo.dto.ArticleUpdateDTO;
+import cn.edu.hit.artman.pojo.dto.*;
+import cn.edu.hit.artman.pojo.po.Article;
 import cn.edu.hit.artman.pojo.vo.ArticleInfoVO;
+import cn.edu.hit.artman.service.ArticleService;
+import cn.edu.hit.artman.service.OssService;
 import com.github.pagehelper.PageInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+
+import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 
 @Tag(name = "ArticleController", description = "文章接口")
 @RestController("ArticleController")
@@ -21,6 +26,9 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin
 @RequiredArgsConstructor
 public class ArticleController {
+
+    private final ArticleService articleService;
+    private final OssService ossService;
 
     @Operation(
         summary = "创建文章",
@@ -38,9 +46,24 @@ public class ArticleController {
         }
     )
     @PostMapping()
-    public Result<Long> createArticle(@RequestBody ArticleCreateDTO articleCreateDTO,
+    @Transactional
+    public Result<Long> createArticle(@RequestBody @Valid ArticleCreateDTO articleCreateDTO,
                                         @RequestHeader("X-User-Id") Long userId) {
-        return Result.internalServerError("未实现");
+
+        Long articleId = articleService.createArticleWithMetaInfo(userId, articleCreateDTO);
+        String articleContent = articleCreateDTO.getContent();
+
+        String objectName = ossService.generateObjectName(userId, articleId);
+        String contentUrl = ossService.uploadFile(objectName, articleContent);
+
+        Article updatedArticle = new Article();
+        updatedArticle.setArticleId(articleId);
+        updatedArticle.setContentUrl(contentUrl);
+        if (!articleService.updateById(updatedArticle)) {
+            throw new ArtManException(HTTP_INTERNAL_ERROR, "更新文章URL失败，未知数据库原因");
+        }
+
+        return Result.created(articleId, "文章创建成功");
     }
 
     @Operation(
@@ -72,7 +95,9 @@ public class ArticleController {
         )
         @PathVariable Integer pageSize,
         @RequestHeader("X-User-Id") Long userId) {
-        return Result.internalServerError("未实现");
+
+        PageInfo<ArticleInfoVO> articles = articleService.getAllArticlesByUserId(userId, pageNum, pageSize);
+        return Result.ok(articles, "获取用户所有文章成功");
     }
 
     @Operation(
@@ -107,9 +132,13 @@ public class ArticleController {
             in = ParameterIn.PATH
         )
         @PathVariable Integer pageSize,
-        @RequestBody ArticleSimpleSearchDTO articleSimpleSearchDTO,
+        ArticleSimpleSearchDTO articleSimpleSearchDTO,
         @RequestHeader("X-User-Id") Long userId) {
-        return Result.internalServerError("未实现");
+
+        PageInfo<ArticleInfoVO> articles = articleService.getSimpleSearchArticlesByUserId(
+            userId, pageNum, pageSize, articleSimpleSearchDTO);
+
+        return Result.ok(articles, "文章简单搜索成功");
     }
 
     @Operation(
@@ -146,7 +175,7 @@ public class ArticleController {
             in = ParameterIn.PATH
         )
         @PathVariable Integer pageSize,
-        @RequestBody ArticleComplexSearchDTO articleComplexSearchDTO,
+        ArticleComplexSearchDTO articleComplexSearchDTO,
         @RequestHeader("X-User-Id") Long userId) {
         return Result.internalServerError("未实现");
     }
@@ -171,7 +200,14 @@ public class ArticleController {
         )
         @PathVariable Long articleId,
         @RequestHeader("X-User-Id") Long userId) {
-        return Result.internalServerError("未实现");
+
+        ArticleInfoVO articleInfo = articleService.getArticleInfoById(articleId);
+
+        if (articleInfo.getIsShared() || articleInfo.getUserId().equals(userId)) {
+            return Result.ok(articleInfo, "获取文章详情成功");
+        } else {
+            return Result.forbidden("无权访问该文章");
+        }
     }
 
     @Operation(
@@ -189,6 +225,7 @@ public class ArticleController {
         }
     )
     @PutMapping("/{articleId}")
+    @Transactional
     public Result<Object> updateArticle(
         @Parameter(
             name = "articleId",
@@ -199,7 +236,25 @@ public class ArticleController {
         @PathVariable Long articleId,
         @RequestBody ArticleUpdateDTO articleUpdateDTO,
         @RequestHeader("X-User-Id") Long userId) {
-        return Result.internalServerError("未实现");
+
+        if (!articleService.updateArticleWithMetaInfo(userId, articleId, articleUpdateDTO)) {
+            throw new ArtManException(HTTP_INTERNAL_ERROR, "更新文章失败，未知数据库原因");
+        }
+
+        // 如果更新了内容，则需要重新上传到OSS
+        if (articleUpdateDTO.getContent() != null) {
+            String objectName = ossService.generateObjectName(userId, articleId);
+            String contentUrl = ossService.uploadFile(objectName, articleUpdateDTO.getContent());
+
+            Article updatedArticle = new Article();
+            updatedArticle.setArticleId(articleId);
+            updatedArticle.setContentUrl(contentUrl);
+            if (!articleService.updateById(updatedArticle)) {
+                throw new ArtManException(HTTP_INTERNAL_ERROR, "更新文章URL失败，未知数据库原因");
+            }
+        }
+
+        return Result.ok("文章更新成功");
     }
 
     @Operation(
@@ -213,6 +268,7 @@ public class ArticleController {
         }
     )
     @DeleteMapping("/{articleId}")
+    @Transactional
     public Result<Object> deleteArticle(
         @Parameter(
             name = "articleId",
@@ -222,7 +278,17 @@ public class ArticleController {
         )
         @PathVariable Long articleId,
         @RequestHeader("X-User-Id") Long userId) {
-        return Result.internalServerError("未实现");
+
+        // 删除元数据
+        if (!articleService.deleteArticle(userId, articleId)) {
+            throw new ArtManException(HTTP_INTERNAL_ERROR, "删除文章失败，未知数据库原因");
+        }
+
+        // 删除OSS中的内容
+        String objectName = ossService.generateObjectName(userId, articleId);
+        ossService.deleteFile(objectName);
+
+        return Result.ok("文章删除成功");
     }
 
     @Operation(
@@ -253,8 +319,20 @@ public class ArticleController {
             required = true,
             in = ParameterIn.PATH
         )
-        @PathVariable Integer pageSize) {
-        return Result.internalServerError("未实现");
+        @PathVariable Integer pageSize,
+        ArticleSharedSearchDTO articleSharedSearchDTO) {
+
+        String keyword = articleSharedSearchDTO.getKeyword();
+        if (keyword == null || keyword.trim().isEmpty()) {
+            PageInfo<ArticleInfoVO> articles = articleService.getSimpleSearchSharedArticles(
+                pageNum,
+                pageSize,
+                articleSharedSearchDTO.getStartDate(),
+                articleSharedSearchDTO.getEndDate());
+            return Result.ok(articles, "获取共享文章列表成功");
+        } else {
+            return Result.internalServerError("未实现关键字搜索功能");
+        }
     }
 
 }
