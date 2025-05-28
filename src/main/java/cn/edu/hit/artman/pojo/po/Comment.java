@@ -1,9 +1,6 @@
 package cn.edu.hit.artman.pojo.po;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -60,7 +57,10 @@ public class Comment implements Serializable {
     /**
      * 
      */
-    @TableField(value = "create_time")
+    @TableField(
+        value = "create_time",
+        insertStrategy = FieldStrategy.NEVER
+    )
     private LocalDateTime createTime;
 
     @Serial

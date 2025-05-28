@@ -1,9 +1,6 @@
 package cn.edu.hit.artman.pojo.po;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -48,7 +45,10 @@ public class Image implements Serializable {
     /**
      * 图片上传时间
      */
-    @TableField(value = "upload_time")
+    @TableField(
+        value = "upload_time",
+        insertStrategy = FieldStrategy.NEVER
+    )
     private LocalDateTime uploadTime;
 
     @Serial
