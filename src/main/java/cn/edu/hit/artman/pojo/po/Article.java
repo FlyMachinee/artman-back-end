@@ -65,6 +65,7 @@ public class Article implements Serializable {
      * 文章状态：草稿、发布
      */
     @TableField(value = "status")
+    @EnumValue
     private ArticleStatus status;
 
     /**
