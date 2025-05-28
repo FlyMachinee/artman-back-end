@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,7 +45,7 @@ public class CommentController {
             in = ParameterIn.PATH
         )
         @PathVariable("articleId") Long articleId,
-        @RequestBody CommentCreateDTO commentCreateDTO,
+        @RequestBody @Valid CommentCreateDTO commentCreateDTO,
         @RequestHeader("X-User-Id") Long userId) {
         return Result.internalServerError("未实现");
     }

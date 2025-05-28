@@ -1,7 +1,7 @@
 package cn.edu.hit.artman.pojo.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,7 +15,7 @@ import java.io.Serializable;
 public class CommentCreateDTO implements Serializable {
 
     @Schema(title = "评论内容", example = "这是一条评论")
-    @NotNull(message = "评论内容不能为空")
+    @NotBlank(message = "评论内容不能为空")
     private String content;
 
     @Schema(
