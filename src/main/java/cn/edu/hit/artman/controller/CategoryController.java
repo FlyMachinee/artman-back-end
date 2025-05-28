@@ -2,13 +2,16 @@ package cn.edu.hit.artman.controller;
 
 import cn.edu.hit.artman.common.result.Result;
 import cn.edu.hit.artman.pojo.dto.CategoryCreateDTO;
+import cn.edu.hit.artman.pojo.dto.CategoryUpdateDTO;
 import cn.edu.hit.artman.pojo.vo.CategoryInfoVO;
 import cn.edu.hit.artman.pojo.vo.CategoryTreeEntryVO;
+import cn.edu.hit.artman.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +23,8 @@ import java.util.List;
 @CrossOrigin
 @RequiredArgsConstructor
 public class CategoryController {
+
+    private final CategoryService categoryService;
 
     @Operation(
         summary = "创建分类",
@@ -36,9 +41,19 @@ public class CategoryController {
         }
     )
     @PostMapping()
-    public Result<Long> createCategory(@RequestBody CategoryCreateDTO categoryCreateDTO,
+    public Result<Long> createCategory(@RequestBody @Valid CategoryCreateDTO categoryCreateDTO,
                                        @RequestHeader("X-User-Id") Long userId) {
-        return Result.internalServerError("未实现");
+        Long categoryId = categoryService.createCategory(
+            userId,
+            categoryCreateDTO.getName(),
+            categoryCreateDTO.getParentId()
+        );
+
+        if (categoryId != null) {
+            return Result.created(categoryId, "分类创建成功");
+        } else {
+            return Result.internalServerError("创建分类失败，原因未知");
+        }
     }
 
     @Operation(
@@ -62,7 +77,9 @@ public class CategoryController {
         )
         @PathVariable Long categoryId,
         @RequestHeader("X-User-Id") Long userId) {
-        return Result.internalServerError("未实现");
+
+        CategoryInfoVO categoryInfoVO = categoryService.getCategoryInfoById(categoryId, userId);
+        return Result.ok(categoryInfoVO, "获取分类信息成功");
     }
 
     @Operation(
@@ -88,7 +105,14 @@ public class CategoryController {
         )
         @PathVariable Long categoryId,
         @RequestHeader("X-User-Id") Long userId) {
-        return Result.internalServerError("未实现");
+
+        if (categoryId == 0) {
+            List<CategoryTreeEntryVO> categoryTree = categoryService.getCategoryWholeTree(userId);
+            return Result.ok(categoryTree, "获取分类树成功");
+        } else {
+            CategoryTreeEntryVO categoryTree = categoryService.getCategoryTree(categoryId, userId);
+            return Result.ok(List.of(categoryTree), "获取分类树成功");
+        }
     }
 
     @Operation(
@@ -117,9 +141,20 @@ public class CategoryController {
             in = ParameterIn.PATH
         )
         @PathVariable Long categoryId,
-        @RequestBody CategoryCreateDTO categoryCreateDTO,
+        @RequestBody CategoryUpdateDTO categoryUpdateDTO,
         @RequestHeader("X-User-Id") Long userId) {
-        return Result.internalServerError("未实现");
+
+        boolean isSuccess = categoryService.updateCategory(
+            categoryId,
+            userId,
+            categoryUpdateDTO.getName(),
+            categoryUpdateDTO.getParentId()
+        );
+        if (isSuccess) {
+            return Result.ok("更新分类成功");
+        } else {
+            return Result.internalServerError("更新分类失败，原因未知");
+        }
     }
 
     @Operation(
@@ -147,7 +182,13 @@ public class CategoryController {
         )
         @PathVariable Long categoryId,
         @RequestHeader("X-User-Id") Long userId) {
-        return Result.internalServerError("未实现");
+
+        boolean isSuccess = categoryService.deleteCategory(categoryId, userId);
+        if (isSuccess) {
+            return Result.ok("删除分类成功");
+        } else {
+            return Result.internalServerError("删除分类失败，原因未知");
+        }
     }
 
     @Operation(
@@ -175,6 +216,8 @@ public class CategoryController {
         )
         @PathVariable Long categoryId,
         @RequestHeader("X-User-Id") Long userId) {
-        return Result.internalServerError("未实现");
+
+        List<CategoryInfoVO> categoryPath = categoryService.getCategoryPath(categoryId, userId);
+        return Result.ok(categoryPath, "获取分类路径成功");
     }
 }

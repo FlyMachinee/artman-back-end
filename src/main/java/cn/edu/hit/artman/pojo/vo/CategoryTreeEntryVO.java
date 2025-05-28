@@ -34,5 +34,5 @@ public class CategoryTreeEntryVO implements Serializable {
     private LocalDateTime updateTime;
 
     @Schema(description = "子分类列表")
-    private List<CategoryInfoVO> children;
+    private List<CategoryTreeEntryVO> children;
 }

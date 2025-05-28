@@ -12,8 +12,89 @@
             <result property="createTime" column="create_time" />
             <result property="updateTime" column="update_time" />
     </resultMap>
+    
+    <resultMap id="CategoryTreeMap" type="cn.edu.hit.artman.pojo.vo.CategoryTreeEntryVO">
+            <id property="categoryId" column="category_id" />
+            <result property="userId" column="user_id" />
+            <result property="name" column="name" />
+            <result property="parentId" column="parent_id" />
+            <result property="createTime" column="create_time" />
+            <result property="updateTime" column="update_time" />
+            <collection property="children" ofType="cn.edu.hit.artman.pojo.vo.CategoryTreeEntryVO"
+                javaType="java.util.List" column="category_id" select="getCategoryTree"
+            />
+    </resultMap>
 
     <sql id="Base_Column_List">
         category_id,user_id,name,parent_id,create_time,update_time
     </sql>
+
+    <update id="setParentIdNull">
+        update category
+        set parent_id = null
+        where category_id = #{categoryId}
+    </update>
+
+    <select id="getCategoryByNameAndParentId" resultType="cn.edu.hit.artman.pojo.po.Category">
+        select
+        <include refid="Base_Column_List"/>
+        from category
+        where name = #{name} and parent_id = #{parentId}
+    </select>
+
+    <select id="getCategoryByUserId" resultType="cn.edu.hit.artman.pojo.po.Category">
+        select
+        <include refid="Base_Column_List"/>
+        from category
+        where user_id = #{userId}
+    </select>
+
+    <select id="getCategoryTree" resultType="cn.edu.hit.artman.pojo.vo.CategoryTreeEntryVO"
+        resultMap="CategoryTreeMap"
+    >
+        select
+        <include refid="Base_Column_List"/>
+        from category
+        where parent_id = #{parentId}
+        order by name
+    </select>
+
+    <select id="getCategoryWholeTree" resultType="cn.edu.hit.artman.pojo.vo.CategoryTreeEntryVO"
+        resultMap="CategoryTreeMap"
+    >
+        select
+        <include refid="Base_Column_List"/>
+        from category
+        where parent_id is null and user_id = #{userId}
+        order by name
+    </select>
+
+    <select id="getCategoryPath" resultType="cn.edu.hit.artman.pojo.po.Category">
+         with recursive CategoryPath as (
+            select
+            <include refid="Base_Column_List"/>
+            from
+            category
+            where
+            category_id = #{categoryId}
+
+            union all
+
+            select
+            c.category_id,
+            c.user_id,
+            c.name,
+            c.parent_id,
+            c.create_time,
+            c.update_time
+            from
+            category c
+            inner join
+            CategoryPath cp on c.category_id = cp.parent_id
+        )
+        select
+        <include refid="Base_Column_List" />
+        from
+        CategoryPath
+    </select>
 </mapper>
