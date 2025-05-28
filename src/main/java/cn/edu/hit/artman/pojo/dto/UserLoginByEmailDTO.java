@@ -1,7 +1,7 @@
 package cn.edu.hit.artman.pojo.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,10 +15,10 @@ import java.io.Serializable;
 public class UserLoginByEmailDTO implements Serializable {
 
     @Schema(title = "邮箱", example = "555@555.com")
-    @NotNull(message = "邮箱不能为空")
+    @NotBlank(message = "邮箱不能为空")
     private String email;
 
     @Schema(title = "密码", example = "123456")
-    @NotNull(message = "密码不能为空")
+    @NotBlank(message = "密码不能为空")
     private String password;
 }

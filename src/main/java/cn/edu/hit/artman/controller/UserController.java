@@ -1,17 +1,18 @@
 package cn.edu.hit.artman.controller;
 
 import cn.edu.hit.artman.common.result.Result;
-import cn.edu.hit.artman.pojo.dto.UserLoginByNameDTO;
-import cn.edu.hit.artman.pojo.dto.UserRegisterDTO;
-import cn.edu.hit.artman.pojo.dto.UserUpdateInfoDTO;
-import cn.edu.hit.artman.pojo.dto.UserUpdatePasswordDTO;
+import cn.edu.hit.artman.pojo.dto.*;
+import cn.edu.hit.artman.pojo.po.User;
 import cn.edu.hit.artman.pojo.vo.UserInfoVO;
 import cn.edu.hit.artman.pojo.vo.UserLoginVO;
+import cn.edu.hit.artman.service.UserService;
+import cn.hutool.core.bean.BeanUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,8 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin
 @RequiredArgsConstructor
 public class UserController {
+
+    private final UserService userService;
 
     @Operation(
         summary = "用户注册",
@@ -36,8 +39,17 @@ public class UserController {
         }
     )
     @PostMapping("/register")
-    public Result<Object> register(@RequestBody UserRegisterDTO userRegisterDTO) {
-        return Result.internalServerError("未实现");
+    public Result<Object> register(@RequestBody @Valid UserRegisterDTO userRegisterDTO) {
+        boolean isSuccess = userService.register(
+            userRegisterDTO.getUsername(),
+            userRegisterDTO.getEmail(),
+            userRegisterDTO.getPassword()
+        );
+        if (isSuccess) {
+            return Result.created("注册成功");
+        } else {
+            return Result.internalServerError("插入表失败，原因未知");
+        }
     }
 
     @Operation(
@@ -54,8 +66,12 @@ public class UserController {
         }
     )
     @PostMapping("/login-by-name")
-    public Result<UserLoginVO> loginByName(@RequestBody UserLoginByNameDTO userLoginByNameDTO) {
-        return Result.internalServerError("未实现");
+    public Result<UserLoginVO> loginByName(@RequestBody @Valid UserLoginByNameDTO userLoginByNameDTO) {
+        UserLoginVO userLoginVO = userService.loginByName(
+            userLoginByNameDTO.getUsername(),
+            userLoginByNameDTO.getPassword()
+        );
+        return Result.ok(userLoginVO, "登录成功");
     }
 
     @Operation(
@@ -72,8 +88,12 @@ public class UserController {
         }
     )
     @PostMapping("/login-by-email")
-    public Result<UserLoginVO> loginByEmail(@RequestBody UserLoginByNameDTO userLoginByNameDTO) {
-        return Result.internalServerError("未实现");
+    public Result<UserLoginVO> loginByEmail(@RequestBody @Valid UserLoginByEmailDTO userLoginByEmailDTO) {
+        UserLoginVO userLoginVO = userService.loginByEmail(
+            userLoginByEmailDTO.getEmail(),
+            userLoginByEmailDTO.getPassword()
+        );
+        return Result.ok(userLoginVO, "登录成功");
     }
 
     @Operation(
@@ -90,7 +110,12 @@ public class UserController {
     )
     @PostMapping("/logout")
     public Result<Object> logout(@RequestHeader("X-User-Id") Long userId) {
-        return Result.internalServerError("未实现");
+        boolean isSuccess = userService.logout(userId);
+        if (isSuccess) {
+            return Result.ok("登出成功");
+        } else {
+            return Result.internalServerError("登出失败，原因未知");
+        }
     }
 
     @Operation(
@@ -108,9 +133,18 @@ public class UserController {
         }
     )
     @PutMapping("/password")
-    public Result<Object> updatePassword(@RequestBody UserUpdatePasswordDTO userUpdatePasswordDTO,
+    public Result<Object> updatePassword(@RequestBody @Valid UserUpdatePasswordDTO userUpdatePasswordDTO,
                                          @RequestHeader("X-User-Id") Long userId) {
-        return Result.internalServerError("未实现");
+        boolean isSuccess = userService.updatePassword(
+            userId,
+            userUpdatePasswordDTO.getOldPassword(),
+            userUpdatePasswordDTO.getNewPassword()
+        );
+        if (isSuccess) {
+            return Result.ok("更新密码成功");
+        } else {
+            return Result.internalServerError("更新密码失败，原因未知");
+        }
     }
 
     @Operation(
@@ -135,7 +169,13 @@ public class UserController {
                 in = ParameterIn.PATH
             )
             @PathVariable Long userId) {
-        return Result.internalServerError("未实现");
+        User user = userService.getById(userId);
+        if (user == null) {
+            return Result.notFound("用户未找到");
+        }
+
+        UserInfoVO userInfoVO = BeanUtil.copyProperties(user, UserInfoVO.class);
+        return Result.ok(userInfoVO, "获取用户信息成功");
     }
 
     @Operation(
@@ -155,7 +195,15 @@ public class UserController {
     @PutMapping("/info")
     public Result<Object> updateUserInfo(@RequestBody UserUpdateInfoDTO userUpdateInfoDTO,
                                          @RequestHeader("X-User-Id") Long userId) {
-        return Result.internalServerError("未实现");
+        User user = BeanUtil.copyProperties(userUpdateInfoDTO, User.class);
+        user.setUserId(userId);
+
+        boolean isSuccess = userService.updateById(user);
+        if (isSuccess) {
+            return Result.ok("更新用户信息成功");
+        } else {
+            return Result.internalServerError("更新用户信息失败，原因未知");
+        }
     }
 
 

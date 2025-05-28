@@ -19,4 +19,18 @@
         user_id,username,email,password_hash,nickname,avatar,
         profile,create_time,update_time
     </sql>
+    
+    <select id="getUserByUsername" resultType="cn.edu.hit.artman.pojo.po.User">
+        select
+        <include refid="Base_Column_List"/>
+        from user
+        where username = #{username}
+    </select>
+
+    <select id="getUserByEmail" resultType="cn.edu.hit.artman.pojo.po.User">
+        select
+        <include refid="Base_Column_List"/>
+        from user
+        where email = #{email}
+    </select>
 </mapper>
