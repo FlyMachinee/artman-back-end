@@ -31,3 +31,11 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+
+aliyun:
+  oss:
+    endpoint: oss-cn-beijing.aliyuncs.com
+    accessKeyId: LTAI5t85whiXGeCFrgYEcHnH
+    accessKeySecret: ycfETRDKzFXst6ft0RLExfUHL5fD0q
+    bucketName: artman
+    urlPrefix: https://artman.oss-cn-beijing.aliyuncs.com/
