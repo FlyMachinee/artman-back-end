@@ -31,13 +31,6 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
         }
         name = name.trim();
 
-        // 检查同级分类名称是否重复
-        Category existingCategory =
-            categoryMapper.getCategoryByNameAndParentId(name, parentId);
-        if (existingCategory != null) {
-            throw new ArtManException(HTTP_BAD_REQUEST, "同级分类名称不能重复，请选择其他名称");
-        }
-
         // 检查父分类是否存在
         if (parentId != 0) {
             Category parentCategory = categoryMapper.selectById(parentId);
@@ -51,6 +44,13 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
         } else {
             // 如果parentId为0，表示创建顶级分类
             parentId = null; // 设置为null表示顶级分类
+        }
+
+        // 检查同级分类名称是否重复
+        Category existingCategory =
+            categoryMapper.getCategoryByNameAndParentId(name, parentId);
+        if (existingCategory != null) {
+            throw new ArtManException(HTTP_BAD_REQUEST, "同级分类名称不能重复，请选择其他名称");
         }
 
         // 创建新分类

@@ -39,7 +39,15 @@
         select
         <include refid="Base_Column_List"/>
         from category
-        where name = #{name} and parent_id = #{parentId}
+        <where>
+            name = #{name}
+            <if test="parentId != null">
+                and parent_id = #{parentId}
+            </if>
+            <if test="parentId == null">
+                and parent_id is null
+            </if>
+        </where>
     </select>
 
     <select id="getCategoryByUserId" resultType="cn.edu.hit.artman.pojo.po.Category">
