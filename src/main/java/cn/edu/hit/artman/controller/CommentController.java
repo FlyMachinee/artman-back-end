@@ -2,7 +2,9 @@ package cn.edu.hit.artman.controller;
 
 import cn.edu.hit.artman.common.result.Result;
 import cn.edu.hit.artman.pojo.dto.CommentCreateDTO;
+import cn.edu.hit.artman.pojo.po.Comment;
 import cn.edu.hit.artman.pojo.vo.CommentInfoVO;
+import cn.edu.hit.artman.service.CommentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -21,6 +23,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CommentController {
 
+    private final CommentService commentService;
+
     @Operation(
         summary = "创建评论",
         description = """
@@ -37,7 +41,7 @@ public class CommentController {
         }
     )
     @PostMapping("/{articleId}/comments")
-    public Result<Integer> createComment(
+    public Result<Long> createComment(
         @Parameter(
             name = "articleId",
             description = "评论的文章ID",
@@ -47,7 +51,15 @@ public class CommentController {
         @PathVariable("articleId") Long articleId,
         @RequestBody @Valid CommentCreateDTO commentCreateDTO,
         @RequestHeader("X-User-Id") Long userId) {
-        return Result.internalServerError("未实现");
+
+        Comment comment = new Comment();
+        comment.setArticleId(articleId);
+        comment.setContent(commentCreateDTO.getContent());
+        comment.setReplyId(commentCreateDTO.getReplyId());
+        comment.setRootId(commentCreateDTO.getRootId());
+        comment.setUserId(userId);
+
+        return Result.created(commentService.createComment(comment), "评论创建成功");
     }
 
     @Operation(
@@ -69,7 +81,13 @@ public class CommentController {
             in = ParameterIn.PATH
         )
         @PathVariable("articleId") Long articleId) {
-        return Result.internalServerError("未实现");
+
+        List<CommentInfoVO> comments = commentService.getArticleComments(articleId);
+        if (comments == null) {
+            return Result.internalServerError("获取评论失败，内部错误");
+        } else {
+            return Result.ok(comments, "获取评论成功");
+        }
     }
 
     @Operation(
@@ -98,9 +116,15 @@ public class CommentController {
             required = true,
             in = ParameterIn.PATH
         )
-        @PathVariable("commentId") Integer commentId,
+        @PathVariable("commentId") Long commentId,
         @RequestHeader("X-User-Id") Long userId) {
-        return Result.internalServerError("未实现");
+
+        boolean isSuccess = commentService.deleteComment(articleId, commentId, userId);
+        if (isSuccess) {
+            return Result.ok("评论删除成功");
+        } else {
+            return Result.internalServerError("评论删除失败，内部错误");
+        }
     }
 
 }

@@ -5,17 +5,79 @@
 <mapper namespace="cn.edu.hit.artman.mapper.CommentMapper">
 
     <resultMap id="BaseResultMap" type="cn.edu.hit.artman.pojo.po.Comment">
-            <id property="commentId" column="comment_id" />
-            <result property="articleId" column="article_id" />
-            <result property="userId" column="user_id" />
-            <result property="content" column="content" />
-            <result property="replyId" column="reply_id" />
-            <result property="rootId" column="root_id" />
-            <result property="createTime" column="create_time" />
+        <id property="commentId" column="comment_id"/>
+        <result property="articleId" column="article_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="content" column="content"/>
+        <result property="replyId" column="reply_id"/>
+        <result property="rootId" column="root_id"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <resultMap id="RootCommentInfoMap" type="cn.edu.hit.artman.pojo.vo.CommentInfoVO">
+        <id property="commentId" column="comment_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="username" column="username"/>
+        <result property="nickname" column="nickname"/>
+        <result property="avatar" column="avatar"/>
+        <result property="content" column="content"/>
+        <result property="createTime" column="create_time"/>
+        <collection property="subComments" ofType="cn.edu.hit.artman.pojo.vo.SubCommentInfoVO"
+                    javaType="java.util.List" column="comment_id" select="getSubComments"/>
+    </resultMap>
+
+    <resultMap id="SubCommentInfoMap" type="cn.edu.hit.artman.pojo.vo.SubCommentInfoVO">
+        <id property="commentId" column="comment_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="username" column="username"/>
+        <result property="nickname" column="nickname"/>
+        <result property="avatar" column="avatar"/>
+        <result property="content" column="content"/>
+        <result property="createTime" column="create_time"/>
+        <result property="replyUserId" column="reply_user_id"/>
+        <result property="replyUsername" column="reply_username"/>
+        <result property="replyNickname" column="reply_nickname"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         comment_id,article_id,user_id,content,reply_id,root_id,
         create_time
     </sql>
+
+    <sql id="Root_Comment_Info_Column_List">
+        comment_id,user.user_id,username,nickname,avatar,
+        content,comment.create_time
+    </sql>
+
+    <sql id="Sub_Comment_Info_Column_List">
+        comment.comment_id,
+        user.user_id,user.username,user.nickname,user.avatar,
+        comment.content,comment.create_time,
+        reply_user.user_id as reply_user_id,
+        reply_user.username as reply_username,
+        reply_user.nickname as reply_nickname
+    </sql>
+
+    <select id="getArticleComments" resultType="cn.edu.hit.artman.pojo.vo.CommentInfoVO"
+        resultMap="RootCommentInfoMap">
+        select
+        <include refid="Root_Comment_Info_Column_List"/>
+        from comment
+        left join user on comment.user_id = user.user_id
+        where article_id = #{articleId}
+        and root_id is null
+        order by create_time
+    </select>
+
+    <select id="getSubComments" resultType="cn.edu.hit.artman.pojo.vo.SubCommentInfoVO"
+        resultMap="SubCommentInfoMap">
+        select
+        <include refid="Sub_Comment_Info_Column_List"/>
+        from comment
+        left join user on comment.user_id = user.user_id
+        left join comment as reply_comment on comment.reply_id = reply_comment.comment_id
+        left join user as reply_user on reply_comment.user_id = reply_user.user_id
+        where comment.root_id = #{rootId}
+        order by create_time
+    </select>
 </mapper>
