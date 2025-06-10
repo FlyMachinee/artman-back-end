@@ -15,4 +15,12 @@
     <sql id="Base_Column_List">
         image_id,user_id,name,url,upload_time
     </sql>
+
+    <select id="getImagesByUserId" resultType="cn.edu.hit.artman.pojo.po.Image">
+        select
+        <include refid="Base_Column_List" />
+        from image
+        where user_id = #{userId}
+        order by upload_time desc
+    </select>
 </mapper>
