@@ -13,4 +13,6 @@ public interface OssService {
     String generateObjectName(Long userId, Long articleId);
 
     String getUrlPrefix();
+
+    String getContentFromUrl(String urlString);
 }

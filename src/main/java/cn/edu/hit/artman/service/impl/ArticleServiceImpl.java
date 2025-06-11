@@ -17,6 +17,7 @@ import com.github.pagehelper.PageInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.github.pagehelper.PageHelper;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,6 +33,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article>
     private final CategoryMapper categoryMapper;
 
     @Override
+    @Transactional // 确保事务一致性
     public Long createArticleWithMetaInfo(Long userId, ArticleCreateDTO articleCreateDTO) {
         Article article = BeanUtil.copyProperties(articleCreateDTO, Article.class);
         article.setUserId(userId);
@@ -47,18 +49,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article>
             if (category == null) {
                 throw new ArtManException(HTTP_NOT_FOUND, "分类不存在");
             }
-
-            // 检查分类是否可被该用户使用
             if (!category.getUserId().equals(userId)) {
                 throw new ArtManException(HTTP_FORBIDDEN, "该分类不可用，非本用户创建");
             }
         } else {
-            // 如果没有指定分类，则使用默认分类
-            article.setCategoryId(null);
+            article.setCategoryId(null); // 如果分类为0，表示顶级分类，不设置分类ID
         }
 
         if (articleMapper.insert(article) <= 0) {
-            throw new ArtManException(HTTP_INTERNAL_ERROR, "文章创建失败，未知数据库原因");
+            throw new ArtManException(HTTP_INTERNAL_ERROR, "创建文章失败");
         }
 
         return article.getArticleId();
@@ -111,6 +110,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article>
     }
 
     @Override
+    @Transactional
     public boolean updateArticleWithMetaInfo(Long userId, Long articleId, ArticleUpdateDTO articleUpdateDTO) {
        // 检查文章是否存在
         Article article = articleMapper.selectById(articleId);
@@ -178,6 +178,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article>
     }
 
     @Override
+    @Transactional
     public boolean deleteArticle(Long userId, Long articleId) {
        // 检查文章是否存在
         Article article = articleMapper.selectById(articleId);

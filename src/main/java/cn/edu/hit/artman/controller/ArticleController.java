@@ -2,11 +2,16 @@ package cn.edu.hit.artman.controller;
 
 import cn.edu.hit.artman.common.exception.ArtManException;
 import cn.edu.hit.artman.common.result.Result;
+import cn.edu.hit.artman.pojo.document.ArticleDocument;
 import cn.edu.hit.artman.pojo.dto.*;
 import cn.edu.hit.artman.pojo.po.Article;
+import cn.edu.hit.artman.pojo.po.User;
 import cn.edu.hit.artman.pojo.vo.ArticleInfoVO;
 import cn.edu.hit.artman.service.ArticleService;
+import cn.edu.hit.artman.service.ElasticSearchArticleService;
 import cn.edu.hit.artman.service.OssService;
+import cn.edu.hit.artman.service.UserService;
+import cn.hutool.core.bean.BeanUtil;
 import com.github.pagehelper.PageInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -18,6 +23,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
+import java.util.Set;
+
 import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 
 @Tag(name = "ArticleController", description = "文章接口")
@@ -28,7 +36,9 @@ import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 public class ArticleController {
 
     private final ArticleService articleService;
+    private final UserService userService;
     private final OssService ossService;
+    private final ElasticSearchArticleService elasticSearchArticleService;
 
     @Operation(
         summary = "创建文章",
@@ -62,6 +72,18 @@ public class ArticleController {
         if (!articleService.updateById(updatedArticle)) {
             throw new ArtManException(HTTP_INTERNAL_ERROR, "更新文章URL失败，未知数据库原因");
         }
+
+        // 同步到 Elasticsearch
+        Article article = articleService.getById(articleId);
+        User user = userService.getById(userId);
+        ArticleDocument articleDocument = BeanUtil.copyProperties(article, ArticleDocument.class);
+        articleDocument.setId(articleId);
+        articleDocument.setUsername(user.getUsername());
+        articleDocument.setNickname(user.getNickname());
+        articleDocument.setStatus(article.getStatus().getValue());
+        articleDocument.setContent(articleContent);
+        elasticSearchArticleService.syncArticle(articleDocument);
+
 
         return Result.created(articleId, "文章创建成功");
     }
@@ -177,7 +199,24 @@ public class ArticleController {
         @PathVariable Integer pageSize,
         ArticleComplexSearchDTO articleComplexSearchDTO,
         @RequestHeader("X-User-Id") Long userId) {
-        return Result.internalServerError("未实现");
+
+        Long categoryId = articleComplexSearchDTO.getCategoryId();
+        Set<Long> categoryIds = categoryId == null || categoryId == 0 ?
+            null :
+            Collections.singleton(categoryId);
+
+        PageInfo<ArticleInfoVO> articles = elasticSearchArticleService.complexSearchUserArticles(
+            userId,
+            pageNum,
+            pageSize,
+            articleComplexSearchDTO.getIsShared(),
+            articleComplexSearchDTO.getStatus(),
+            categoryIds,
+            articleComplexSearchDTO.getStartDate(),
+            articleComplexSearchDTO.getEndDate(),
+            articleComplexSearchDTO.getKeyword()
+        );
+        return Result.ok(articles, "获取用户文章列表成功");
     }
 
     @Operation(
@@ -254,6 +293,17 @@ public class ArticleController {
             }
         }
 
+        // 同步到 Elasticsearch
+        Article article = articleService.getById(articleId);
+        User user = userService.getById(userId);
+        ArticleDocument articleDocument = BeanUtil.copyProperties(article, ArticleDocument.class);
+        articleDocument.setId(articleId);
+        articleDocument.setUsername(user.getUsername());
+        articleDocument.setNickname(user.getNickname());
+        articleDocument.setStatus(article.getStatus().getValue());
+        articleDocument.setContent(articleUpdateDTO.getContent());
+        elasticSearchArticleService.syncArticle(articleDocument);
+
         return Result.ok("文章更新成功");
     }
 
@@ -287,6 +337,9 @@ public class ArticleController {
         // 删除OSS中的内容
         String objectName = ossService.generateObjectName(userId, articleId);
         ossService.deleteFile(objectName);
+
+        // 从 Elasticsearch 删除文章
+        elasticSearchArticleService.deleteArticle(articleId);
 
         return Result.ok("文章删除成功");
     }
@@ -323,16 +376,26 @@ public class ArticleController {
         ArticleSharedSearchDTO articleSharedSearchDTO) {
 
         String keyword = articleSharedSearchDTO.getKeyword();
+        PageInfo<ArticleInfoVO> articles;
+
         if (keyword == null || keyword.trim().isEmpty()) {
-            PageInfo<ArticleInfoVO> articles = articleService.getSimpleSearchSharedArticles(
+            // 如果 keyword 为 null 或空，使用数据库的简单搜索
+            // 注意：这里调用的是 ArticleService 的数据库查询方法
+            articles = articleService.getSimpleSearchSharedArticles(
                 pageNum,
                 pageSize,
                 articleSharedSearchDTO.getStartDate(),
                 articleSharedSearchDTO.getEndDate());
-            return Result.ok(articles, "获取共享文章列表成功");
         } else {
-            return Result.internalServerError("未实现关键字搜索功能");
+            // 如果 keyword 不为空，使用 Elasticsearch 搜索
+            articles = elasticSearchArticleService.searchSharedArticles(
+                pageNum,
+                pageSize,
+                articleSharedSearchDTO.getStartDate(),
+                articleSharedSearchDTO.getEndDate(),
+                keyword);
         }
+        return Result.ok(articles, "获取共享文章列表成功");
     }
 
 }
