@@ -21,6 +21,7 @@ public class ArtmanApplication implements CommandLineRunner {
     @Override
     public void run(String... args) {
         // 在应用启动后执行全量同步
+        elasticSearchArticleService.deleteAllArticles(); // 清空现有数据
         elasticSearchArticleService.syncAllArticlesFromDatabase();
     }
 }

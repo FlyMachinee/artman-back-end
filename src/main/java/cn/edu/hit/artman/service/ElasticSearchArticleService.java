@@ -17,6 +17,8 @@ public interface ElasticSearchArticleService {
      */
     void syncArticle(Article article);
 
+    void deleteAllArticles();
+
     /**
      * 将文章同步到 Elasticsearch
      * @param articleDocument 文章文档对象

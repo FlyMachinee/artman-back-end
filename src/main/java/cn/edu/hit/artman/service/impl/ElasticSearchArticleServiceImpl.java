@@ -74,6 +74,12 @@ public class ElasticSearchArticleServiceImpl implements ElasticSearchArticleServ
     }
 
     @Override
+    public void deleteAllArticles() {
+        articleDocumentRepository.deleteAll();
+        log.info("All articles deleted from Elasticsearch.");
+    }
+
+    @Override
     public void syncArticle(ArticleDocument articleDocument) {
         // 直接保存 ArticleDocument 对象
         articleDocumentRepository.save(articleDocument);
@@ -152,7 +158,7 @@ public class ElasticSearchArticleServiceImpl implements ElasticSearchArticleServ
         // 可选：status
         if (status != null) {
             // 注意：Elasticsearch中的status字段被映射为Keyword类型，所以直接使用其名称进行精确匹配
-            boolQueryBuilder.must(QueryBuilders.term(t -> t.field("status").value(status.name())));
+            boolQueryBuilder.must(QueryBuilders.term(t -> t.field("status").value(status.getValue())));
         }
 
         // 可选：categoryId (支持多个，包含子分类)
